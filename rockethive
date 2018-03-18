@@ -1,0 +1,343 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Standard Library Imports
+import argparse
+import sys
+import time
+
+# Poke Farm Imports
+from schlyme.display import *
+from schlyme.hive import *
+
+def parse_arguments():
+    # Create the top-level parser
+    parser     = argparse.ArgumentParser(description=None)
+    subparsers = parser.add_subparsers(title='commands', dest='command') 
+    
+    # Add arguments to the top level parser
+    #parser.add_argument('-r', '--region', help='region for which to act on hive(s)', default=default_region)
+    
+    # Create sub-command parser: attach
+    parser_attach = subparsers.add_parser('attach', help='attach to a hive')
+    parser_attach.add_argument('hive', help='hive to which to attach')
+    
+    # Create sub-command parser: status
+    parser_status = subparsers.add_parser('status', help='show status for one or more hives')
+    parser_status.add_argument('-a', '--all', help='show status for all hives', action='store_true', default=False)
+    parser_status.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to show status', default=[])
+    parser_status.add_argument('hive', nargs='*', help='hive(s) for which to show status')
+    
+    # Create sub-command parser: start
+    parser_start = subparsers.add_parser('start', help='start one or more hives')
+    parser_start.add_argument('-a', '--all', help='start all hives', action='store_true', default=False)
+    parser_start.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to start', default=[])
+    parser_start.add_argument('hive', nargs='*', help='hive(s) to start')
+    
+    # Create sub-command parser: restart
+    parser_restart = subparsers.add_parser('restart', help='restart one or more hives')
+    parser_restart.add_argument('-a', '--all', help='restart all hives', action='store_true', default=False)
+    parser_restart.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to restart', default=[])
+    parser_restart.add_argument('hive', nargs='*', help='hive(s) to restart')
+    
+    # Create sub-command parser: stop
+    parser_stop = subparsers.add_parser('stop', help='stop one or more hives')
+    parser_stop.add_argument('-a', '--all', help='stop all hives', action='store_true', default=False)
+    parser_stop.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to stop', default=[])
+    parser_stop.add_argument('hive', nargs='*', help='hive(s) to stop')
+    
+    # Create sub-command parser: reset-scan
+    parser_resetscan = subparsers.add_parser('reset-scan', help='initscan a hive')
+    parser_resetscan.add_argument('-a', '--all', help='reset-scan all hives', action='store_true', default=False)
+    parser_resetscan.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to reset-scan', default=[])
+    parser_resetscan.add_argument('hive', nargs='*', help='hive(s) to reset-scan')
+    
+    # Create sub-command parser: init-scan
+    parser_initscan = subparsers.add_parser('init-scan', help='init-scan a hive')
+    parser_initscan.add_argument('-a', '--all', help='init-scan all hives', action='store_true', default=False)
+    parser_initscan.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to init-scan', default=[])
+    parser_initscan.add_argument('hive', nargs='*', help='hive(s) to init-scan')
+    
+    # Create sub-command parser: rotate
+    parser_rotate = subparsers.add_parser('rotate', help='rotate a hive')
+    parser_rotate.add_argument('-a', '--all', help='rotate all hives', action='store_true', default=False)
+    parser_rotate.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to rotate', default=[])
+    parser_rotate.add_argument('hive', nargs='*', help='hive(s) to rotate')
+    
+    # Create sub-command parser: level-up
+    parser_levelup = subparsers.add_parser('level-up', help='level-up a hive')
+    parser_levelup.add_argument('-a', '--all', help='level-up all hives', action='store_true', default=False)
+    parser_levelup.add_argument('-z', '--zone', nargs='*', help='hive zone(s) for which to level-up', default=[])
+    parser_levelup.add_argument('hive', nargs='*', help='hive(s) to level-up')
+    
+    # Create sub-command parser: list
+    parser_list = subparsers.add_parser('list', help='list hives or zones or hives for a zone')
+    parser_list.add_argument('-t', '--type', help='type of item to list, zone or hives')
+    parser_list.add_argument('-z', '--zone', help='zone for which to list hives')
+    
+    # Finally, parse the arguments
+    if len(sys.argv) == 1:
+          args = parser.parse_args( ['status']   )
+    else: args = parser.parse_args( sys.argv[1:] )
+    
+    # And return the parsed arguments`
+    return args
+
+if __name__ == '__main__':
+    args = parse_arguments()
+    
+    #zones = Region.get_zones()
+    
+    #print
+    #print Color.to_string()
+    #print
+
+    #print
+    #print "Args:"
+    #print args
+    #print
+
+    #print
+    #print "Rocketmap:"
+    #print Rocketmap.to_string()
+    #print
+    
+    #print
+    #print "Region:"
+    #print Region.to_string()
+    #print
+    
+    #print
+    #print "Regions Hive Entries:"
+    #for hive_entry in hive_list:
+    #    print hive_entry
+    #print
+    
+    #print
+    #print "Zones:"
+    #
+    #for zone in zones:
+    #    print
+    #    print zone
+    #print
+    
+    if ( args.command == 'attach' ):
+        print
+        print 'Attaching to hive: ' + args.hive
+        hive = Hive(args.hive)
+        hive.run_command(args.command)
+        print
+    
+    elif (args.command == 'status'):
+        if not args.all and ( len(args.hive) == 0 ) and ( len(args.zone) == 0 ):
+            args.all = True
+        
+        # Run command for a list of hives
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                hive = Hive(hive_name)
+                print hive.get_pretty_status()
+            print
+        
+        # Run command for all hives or a list of zones
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print Color.UNDERLINE + 'Zone' + Color.PLAIN + ': ' + zone.name
+                    for hive_name in zone.hive_names:
+                        hive = Hive(hive_name)
+                        print '  ' + hive.get_pretty_status()
+                    print
+    
+    elif (args.command == 'start'):
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Starting hive: ' + hive_name
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+            print
+        
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Starting hive: ' + hive_name
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                    print
+    
+    elif (args.command == 'restart'):
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Restarting hive: ' + hive_name
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+            print
+        
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Restarting hive: ' + hive_name
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                    print
+    
+    elif (args.command == 'stop'):
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Stopping hive: ' + hive_name
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+            print
+        
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Stopping hive: ' + hive_name
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                    print
+    
+    elif (args.command == 'reset-scan'):
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Resetting initial scan on hive: ' + hive_name
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+            print
+    
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Resetting initial scan on hive: ' + hive_name
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                    print
+    
+    elif (args.command == 'init-scan'):
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Running initial scan on hive: ' + hive_name
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+            print
+    
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Running initial scan on hive: ' + hive_name
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                    print
+    
+    elif (args.command == 'rotate'):
+        sleep_secs = 3
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Rotating accounts for hive: ' + hive_name + ' (sleeping for ' + str(sleep_secs) + ' seconds)'
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+                time.sleep(sleep_secs)
+            print
+    
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Rotating accounts for hive: ' + hive_name + ' (sleeping for ' + str(sleep_secs) + ' seconds)'
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                        time.sleep(sleep_secs)
+                    print
+    
+    elif (args.command == 'level-up'):
+        sleep_secs = 0.5
+        
+        if len(args.hive) > 0:
+            print
+            for hive_name in args.hive:
+                print 'Levelling up accounts for hive: ' + hive_name + ' (sleeping for ' + str(sleep_secs) + ' seconds)'
+                hive = Hive(hive_name)
+                hive.run_command(args.command)
+                time.sleep(sleep_secs)
+            print
+    
+        elif args.all or ( len(args.zone) > 0 ):
+            zones = Region.get_zones()
+            print
+            
+            for zone in zones:
+                if args.all or ( zone.name in args.zone ):
+                    print 'Zone: ' + zone.name
+                    for hive_name in zone.hive_names:
+                        print '  Levelling up accounts for hive: ' + hive_name + ' (sleeping for ' + str(sleep_secs) + ' seconds)'
+                        hive = Hive(hive_name)
+                        hive.run_command(args.command)
+                        time.sleep(sleep_secs)
+                    print
+    
+    elif (args.command == 'list'):
+        zones = Region.get_zones()
+        
+        if args.type == None or args.type == 'hive' or args.type == 'hives':
+            hive_names = []
+            
+            for zone in zones:
+                if (args.zone == None) or (args.zone == zone.name):
+                    hive_names.extend(zone.hive_names)
+            
+            hive_names = sorted(hive_names)
+            print '\n'.join(hive_names)
+        
+        elif args.type == 'zone' or args.type == 'zones':
+            zone_names = []
+            
+            for zone in zones:
+                zone_names.append(zone.name)
+            
+            zone_names = sorted(zone_names)
+            print '\n'.join(zone_names)
+
